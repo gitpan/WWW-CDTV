@@ -8,41 +8,35 @@ use Encode;
 use HTML::Entities;
 use DateTime;
 use WWW::CDTV::Track;
-use utf8;
 
-our $VERSION = "0.02";
+our $VERSION = "0.03";
 
 sub new {
     my ( $class, $opt ) = @_;
     my $self =
       bless { url => $opt->{url}
-          || "http://www.tbs.co.jp/cdtv/cddb/thisweek-j.html", }, $class;
+          || "http://www.tbs.co.jp/cdtv/cddb/thisweek.html", }, $class;
     $self->init();
     $self;
 }
 
 sub init {
-    my $self = shift;
-    my $ua   = LWP::UserAgent->new();
-
+    my $self     = shift;
+    my $ua       = LWP::UserAgent->new();
     my $response = $ua->get( $self->{url} );
     Carp::croak $response->status_line unless $response->is_success;
-
     my $content = $response->content;
-    Encode::from_to( $content, "iso-2022-jp", "utf-8" );
-    utf8::decode($content);
+    $content = decode( "iso-2022-jp", $content );
 
-    $self->{week} = $1 if ( $content =~ m!Ranking Date (\d{4}/\d{2}/\d{2})! );
-
-    my @match = $content =~ m!<td class="t1" align="right">.*?</tr>!gs;
+    $self->{week} = $1
+      if ( $content =~ m!<span class="date">(\d{4}/\d{2}/\d{2})</span>! );
+    my @match = $content =~ m!<tr class="(?:tbg1|tbg2)">(.*?)</tr>!gs;
 
     my $entry_regex = <<"EOF";
-<td class="t1" align="right">(.*?)\.</td>
-<td><img src=".*?" alt="(.*?)"></td>
-<td class="t1"><a href=".*?">(.*?)</a></td>
-<td class="t1"><a href=".*?">(.*?)</a></td>
+<th scope="row">(.*?)</th>.*<td class="tLeft"><img src="../img/ico_(.*?).gif".*</td>.*<td><a href="../songdb/.*?">(.*?)</a></td>.*?<td><a href="../artistdb/.*?">(.*?)</a></td>
 EOF
     my @tracks;
+    my %move_table = ( 'new' => 'new', 'up' => 'up', 'down' => 'down', );
     foreach my $entry_html (@match) {
         $entry_html =~ m/$entry_regex/gs;
         my $entry = {
@@ -50,23 +44,16 @@ EOF
             title  => decode_entities($3),
             artist => decode_entities($4),
         };
-        if ( $2 =~ /新/ ) {
-            $entry->{move} = "new";
-        }
-        elsif ( $2 =~ /↑/ ) {
-            $entry->{move} = "up";
-        }
-        elsif ( $2 =~ /↓/ ) {
-            $entry->{move} = "down";
-        }
+        $entry->{move} = $move_table{$2};
         $tracks[ $entry->{no} ] = WWW::CDTV::Track->new($entry);
     }
     $self->{tracks} = \@tracks;
 }
+
 sub track {
-    my ($self, $no) = @_;
+    my ( $self, $no ) = @_;
     $no = $no || 1;
-    my @tracks = @{$self->{tracks}};
+    my @tracks = @{ $self->{tracks} };
     return $tracks[$no];
 }
 

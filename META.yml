@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                WWW-CDTV
-version:             0.02
+version:             0.03
 abstract:            Get a weekly music ranking from CDTV ( Japanese TV Program )
 license:             ~
 generated_by:        ExtUtils::MakeMaker version 6.36

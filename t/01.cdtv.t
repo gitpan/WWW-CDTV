@@ -5,7 +5,7 @@ use Encode;
 
 my $cdtv =
   WWW::CDTV->new(
-    { url => "http://www.tbs.co.jp/cdtv/cddb/countdown20080126-j.html" } );
+    { url => "http://www.tbs.co.jp/cdtv/cddb/countdown20080126.html" });
 
 my $week = $cdtv->week;
 is($week,"2008/01/26", "Week");
