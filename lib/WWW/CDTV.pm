@@ -9,7 +9,7 @@ use HTML::Entities;
 use DateTime;
 use WWW::CDTV::Track;
 
-our $VERSION = "0.03";
+our $VERSION = "0.04";
 
 sub new {
     my ( $class, $opt ) = @_;
@@ -33,7 +33,7 @@ sub init {
     my @match = $content =~ m!<tr class="(?:tbg1|tbg2)">(.*?)</tr>!gs;
 
     my $entry_regex = <<"EOF";
-<th scope="row">(.*?)</th>.*<td class="tLeft"><img src="../img/ico_(.*?).gif".*</td>.*<td><a href="../songdb/.*?">(.*?)</a></td>.*?<td><a href="../artistdb/.*?">(.*?)</a></td>
+.*<th scope="row">(.*?)</th>.*<span class="ico_(.*?)">.*<td><a href="../songdb/song.*\.html">(.*?)</a></td>.*<td><a href="../artistdb/.*?">(.*?)</a></td>
 EOF
     my @tracks;
     my %move_table = ( 'new' => 'new', 'up' => 'up', 'down' => 'down', );
