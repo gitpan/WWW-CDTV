@@ -9,7 +9,7 @@ use HTML::Entities;
 use DateTime;
 use WWW::CDTV::Track;
 
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 
 sub new {
     my ( $class, $opt ) = @_;
@@ -26,26 +26,27 @@ sub init {
     my $response = $ua->get( $self->{url} );
     Carp::croak $response->status_line unless $response->is_success;
     my $content = $response->content;
-    $content = decode( "iso-2022-jp", $content );
-
+    $content = decode('iso-2022-jp',$content);
     $self->{week} = $1
       if ( $content =~ m!<span class="date">(\d{4}/\d{2}/\d{2})</span>! );
-    my @match = $content =~ m!<tr class="(?:tbg1|tbg2)">(.*?)</tr>!gs;
-
+    my (@match) = $content =~ m!<tr class="(?:tbg1|tbg2)">(.+?)</tr>!gs;
     my $entry_regex = <<"EOF";
-.*<th scope="row">(.*?)</th>.*<span class="ico_(.*?)">.*<td><a href="../songdb/song.*\.html">(.*?)</a></td>.*<td><a href="../artistdb/.*?">(.*?)</a></td>
+.*?<th scope="row">([^/]+?)</th>.*<span class="ico_(.+?)">.*<td><a href="../songdb/song.+">(.+?)</a></td>.*<td><a href="../artistdb/.+?">(.+?)</a></td>.*
 EOF
     my @tracks;
     my %move_table = ( 'new' => 'new', 'up' => 'up', 'down' => 'down', );
-    foreach my $entry_html (@match) {
-        $entry_html =~ m/$entry_regex/gs;
-        my $entry = {
-            no     => $1,
-            title  => decode_entities($3),
-            artist => decode_entities($4),
-        };
-        $entry->{move} = $move_table{$2};
-        $tracks[ $entry->{no} ] = WWW::CDTV::Track->new($entry);
+    for my $entry_html (@match) {
+        if ( $entry_html =~ m/$entry_regex/gs ) {
+            my $entry = {
+                no     => $1,
+                title  => decode_entities($3),
+                artist => decode_entities($4),
+            };
+            $entry->{move} = $move_table{$2};
+            $tracks[ $entry->{no} ] = WWW::CDTV::Track->new($entry);
+        }else{
+            Carp::croak("Failt to match regex of entries");
+        }
     }
     $self->{tracks} = \@tracks;
 }

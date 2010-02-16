@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               WWW-CDTV
-version:            0.04
+version:            0.05
 abstract:           Get a weekly music ranking from CDTV ( Japanese TV Program )
 author:
     - Yusuke Wada <yusuke@kamawada.com>
